@@ -3,6 +3,8 @@ import 'package:final65120479/backbone/database_helper.dart';
 import 'package:final65120479/backbone/model.dart';
 import 'package:final65120479/screens/plant_detail_screen.dart';
 
+/* สวัสดี */
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

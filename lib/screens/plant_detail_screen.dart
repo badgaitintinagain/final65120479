@@ -1,62 +1,150 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:final65120479/backbone/model.dart';
-import 'package:final65120479/screens/land_use_screen.dart';
+import 'package:final65120479/backbone/database_helper.dart';
+import 'package:final65120479/screens/edit_plant_screen.dart';
 
-class PlantDetailScreen extends StatelessWidget {
+class PlantDetailScreen extends StatefulWidget {
   final Plant plant;
 
-  const PlantDetailScreen({super.key, required this.plant});
+  const PlantDetailScreen({Key? key, required this.plant}) : super(key: key);
+
+  @override
+  _PlantDetailScreenState createState() => _PlantDetailScreenState();
+}
+
+class _PlantDetailScreenState extends State<PlantDetailScreen> {
+  late Plant _plant;
+  late Future<List<LandUse>> _landUsesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _plant = widget.plant;
+    _loadLandUses();
+  }
+
+  void _loadLandUses() {
+    _landUsesFuture = DatabaseHelper().getLandUsesForPlant(_plant.plantID);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(plant.plantName),
+        title: Text(_plant.plantName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () => _editPlant(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => _showDeleteConfirmation(context),
+          ),
+        ],
       ),
-      body: PlantDetailContent(plant: plant),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PlantDetailContent(plant: _plant),
+            const SizedBox(height: 16),
+            LandUseSection(landUsesFuture: _landUsesFuture),
+          ],
+        ),
+      ),
     );
+  }
+
+  Future<void> _editPlant(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditPlantScreen(plant: _plant),
+      ),
+    );
+    if (result == true) {
+      final updatedPlant = await DatabaseHelper().getPlantById(_plant.plantID);
+      setState(() {
+        _plant = updatedPlant;
+        _loadLandUses();
+      });
+    }
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Plant'),
+          content: Text('Are you sure you want to delete ${_plant.plantName}?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () async {
+                await _deletePlant(context);
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(true); // Return to previous screen with refresh flag
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deletePlant(BuildContext context) async {
+    try {
+      final dbHelper = DatabaseHelper();
+      await dbHelper.deletePlant(_plant.plantID);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${_plant.plantName} has been deleted')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting plant: $e')),
+      );
+    }
   }
 }
 
 class PlantDetailContent extends StatelessWidget {
   final Plant plant;
 
-  const PlantDetailContent({super.key, required this.plant});
+  const PlantDetailContent({Key? key, required this.plant}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              plant.plantName,
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (plant.plantImage.isNotEmpty) PlantImage(imagePath: plant.plantImage),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                plant.plantName,
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                plant.plantScientific,
+                style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic, color: Color(0xFF54595D)),
+              ),
+            ],
           ),
-          PlantImage(imagePath: plant.plantImage),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  plant.plantScientific,
-                  style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic, color: Color(0xFF54595D)),
-                ),
-                const SizedBox(height: 16),
-                // const PlantDescription(),
-                const SizedBox(height: 16),
-                // const ContentTable(),
-                const SizedBox(height: 16),
-                LandUseButton(plantId: plant.plantID),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -64,139 +152,111 @@ class PlantDetailContent extends StatelessWidget {
 class PlantImage extends StatelessWidget {
   final String imagePath;
 
-  const PlantImage({super.key, required this.imagePath});
+  const PlantImage({Key? key, required this.imagePath}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       height: 200,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-          ),
-        ),
-        child: const Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Image caption',
-              style: TextStyle(color: Colors.white, fontSize: 12),
+      child: imagePath.startsWith('assets/')
+          ? Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
+            )
+          : Image.file(
+              File(imagePath),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(child: Text('Error loading image'));
+              },
             ),
+    );
+  }
+}
+
+class LandUseSection extends StatelessWidget {
+  final Future<List<LandUse>> landUsesFuture;
+
+  const LandUseSection({Key? key, required this.landUsesFuture}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Land Uses',
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
-        ),
+          const SizedBox(height: 8),
+          FutureBuilder<List<LandUse>>(
+            future: landUsesFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No land uses found for this plant.'));
+              } else {
+                return Column(
+                  children: snapshot.data!.map((landUse) => LandUseCard(landUse: landUse)).toList(),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-// ... (rest of the code remains the same)
+class LandUseCard extends StatelessWidget {
+  final LandUse landUse;
 
-// class PlantDescription extends StatelessWidget {
-//   const PlantDescription({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Text(
-//           'Description',
-//           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-//         ),
-//         SizedBox(height: 8),
-//         Text(
-//           'This section would contain a detailed description of the plant. '
-//           'It would include information about its characteristics, habitat, and other relevant details.',
-//           style: TextStyle(fontSize: 16),
-//         ),
-//       ],
-//     );
-//   }
-// }
-
-// class ContentTable extends StatelessWidget {
-//   const ContentTable({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: BoxDecoration(
-//         border: Border.all(color: const Color(0xFFA2A9B1)),
-//         borderRadius: BorderRadius.circular(2),
-//       ),
-//       child: Column(
-//         children: [
-//           Container(
-//             padding: const EdgeInsets.all(8),
-//             color: const Color(0xFFEAECF0),
-//             child: const Row(
-//               children: [
-//                 Icon(Icons.list, size: 16, color: Color(0xFF54595D)),
-//                 SizedBox(width: 8),
-//                 Text(
-//                   'Contents',
-//                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(8.0),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 _buildContentItem('1', 'Description'),
-//                 _buildContentItem('2', 'Habitat'),
-//                 _buildContentItem('3', 'Uses'),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildContentItem(String number, String title) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 4.0),
-//       child: Row(
-//         children: [
-//           Text('$number. ', style: const TextStyle(color: Color(0xFF3366CC))),
-//           Text(title, style: const TextStyle(color: Color(0xFF3366CC))),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-class LandUseButton extends StatelessWidget {
-  final int plantId;
-
-  const LandUseButton({super.key, required this.plantId});
+  const LandUseCard({Key? key, required this.landUse}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LandUseScreen(plantId: plantId),
-          ),
-        );
-      },
-      child: const Text('View Land Uses'),
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 30,
+              backgroundImage: AssetImage(landUse.componentIcon),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    landUse.landUseTypeName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Component: ${landUse.componentName}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF54595D)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    landUse.landUseDescription,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

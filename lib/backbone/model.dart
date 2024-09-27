@@ -56,6 +56,7 @@ class LandUse {
   final String landUseDescription;
   final String landUseTypeName;
   final String componentName;
+  final String componentIcon; // Add this line
 
   LandUse({
     required this.landUseID,
@@ -65,6 +66,7 @@ class LandUse {
     required this.landUseDescription,
     required this.landUseTypeName,
     required this.componentName,
+    required this.componentIcon, // Add this line
   });
 
   Map<String, dynamic> toMap() {
@@ -76,6 +78,7 @@ class LandUse {
       'landUseDescription': landUseDescription,
       'landUseTypeName': landUseTypeName,
       'componentName': componentName,
+      'componentIcon': componentIcon, // Add this line
     };
   }
 }

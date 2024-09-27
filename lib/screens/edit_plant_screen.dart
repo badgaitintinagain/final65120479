@@ -6,19 +6,30 @@ import 'package:path/path.dart' as path;
 import 'package:final65120479/backbone/database_helper.dart';
 import 'package:final65120479/backbone/model.dart';
 
-class AddPlantScreen extends StatefulWidget {
-  const AddPlantScreen({Key? key}) : super(key: key);
+class EditPlantScreen extends StatefulWidget {
+  final Plant plant;
+
+  const EditPlantScreen({Key? key, required this.plant}) : super(key: key);
 
   @override
-  _AddPlantScreenState createState() => _AddPlantScreenState();
+  _EditPlantScreenState createState() => _EditPlantScreenState();
 }
 
-class _AddPlantScreenState extends State<AddPlantScreen> {
+class _EditPlantScreenState extends State<EditPlantScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _scientificNameController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _scientificNameController;
   File? _image;
-  List<int> _selectedLandUses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.plant.plantName);
+    _scientificNameController = TextEditingController(text: widget.plant.plantScientific);
+    if (widget.plant.plantImage.isNotEmpty) {
+      _image = File(widget.plant.plantImage);
+    }
+  }
 
   @override
   void dispose() {
@@ -42,7 +53,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Plant'),
+        title: const Text('Edit Plant'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -82,46 +93,14 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _getImage,
-                  child: const Text('Select Image (Optional)'),
+                  child: const Text('Change Image'),
                 ),
                 if (_image != null)
                   Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover),
-                const SizedBox(height: 16),
-                const Text('Select Land Uses:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                FutureBuilder<List<LandUseType>>(
-                  future: DatabaseHelper().getLandUseTypes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No land use types available');
-                    } else {
-                      return Column(
-                        children: snapshot.data!.map((landUseType) {
-                          return CheckboxListTile(
-                            title: Text(landUseType.landUseTypeName),
-                            value: _selectedLandUses.contains(landUseType.landUseTypeID),
-                            onChanged: (bool? value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedLandUses.add(landUseType.landUseTypeID);
-                                } else {
-                                  _selectedLandUses.remove(landUseType.landUseTypeID);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      );
-                    }
-                  },
-                ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _submitForm,
-                  child: const Text('Add Plant'),
+                  child: const Text('Update Plant'),
                 ),
               ],
             ),
@@ -132,10 +111,9 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   }
 
   Future<void> _submitForm() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      String imagePath = '';
-      if (_image != null) {
+    if (_formKey.currentState!.validate()) {
+      String imagePath = widget.plant.plantImage;
+      if (_image != null && _image!.path != widget.plant.plantImage) {
         final directory = await getApplicationDocumentsDirectory();
         final String fileName = path.basename(_image!.path);
         final String newPath = path.join(directory.path, fileName);
@@ -143,30 +121,21 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         imagePath = newPath;
       }
 
-      final newPlant = Plant(
-        plantID: 0,  // Set to 0 to let SQLite auto-increment
+      final updatedPlant = Plant(
+        plantID: widget.plant.plantID,
         plantName: _nameController.text,
         plantScientific: _scientificNameController.text,
         plantImage: imagePath,
       );
 
       final dbHelper = DatabaseHelper();
-      final plantId = await dbHelper.insertPlant(newPlant);
+      await dbHelper.updatePlant(updatedPlant);
 
-      if (plantId > 0) {
-        // Plant was successfully added
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Plant added successfully')),
-        );
-        Navigator.pop(context, true);
-      } else {
-        throw Exception('Failed to insert plant');
-      }
-    } catch (e) {
-      print('Error adding plant: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error adding plant: $e')),
+        const SnackBar(content: Text('Plant updated successfully')),
       );
+
+      Navigator.pop(context, true);
     }
   }
-}}
+}

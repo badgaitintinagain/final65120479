@@ -7,7 +7,7 @@ import 'package:final65120479/backbone/database_helper.dart';
 import 'package:final65120479/backbone/model.dart';
 
 class AddPlantScreen extends StatefulWidget {
-  const AddPlantScreen({Key? key}) : super(key: key);
+  const AddPlantScreen({super.key});
 
   @override
   _AddPlantScreenState createState() => _AddPlantScreenState();
@@ -18,7 +18,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   final _nameController = TextEditingController();
   final _scientificNameController = TextEditingController();
   File? _image;
-  List<int> _selectedLandUses = [];
+  final List<int> _selectedLandUses = [];
 
   @override
   void dispose() {

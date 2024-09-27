@@ -9,7 +9,7 @@ import 'package:final65120479/backbone/model.dart';
 class EditPlantScreen extends StatefulWidget {
   final Plant plant;
 
-  const EditPlantScreen({Key? key, required this.plant}) : super(key: key);
+  const EditPlantScreen({super.key, required this.plant});
 
   @override
   _EditPlantScreenState createState() => _EditPlantScreenState();

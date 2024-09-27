@@ -7,7 +7,7 @@ import 'package:final65120479/screens/edit_plant_screen.dart';
 class PlantDetailScreen extends StatefulWidget {
   final Plant plant;
 
-  const PlantDetailScreen({Key? key, required this.plant}) : super(key: key);
+  const PlantDetailScreen({super.key, required this.plant});
 
   @override
   _PlantDetailScreenState createState() => _PlantDetailScreenState();
@@ -119,7 +119,7 @@ class _PlantDetailScreenState extends State<PlantDetailScreen> {
 class PlantDetailContent extends StatelessWidget {
   final Plant plant;
 
-  const PlantDetailContent({Key? key, required this.plant}) : super(key: key);
+  const PlantDetailContent({super.key, required this.plant});
 
   @override
   Widget build(BuildContext context) {
@@ -152,11 +152,11 @@ class PlantDetailContent extends StatelessWidget {
 class PlantImage extends StatelessWidget {
   final String imagePath;
 
-  const PlantImage({Key? key, required this.imagePath}) : super(key: key);
+  const PlantImage({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 200,
       child: imagePath.startsWith('assets/')
@@ -178,7 +178,7 @@ class PlantImage extends StatelessWidget {
 class LandUseSection extends StatelessWidget {
   final Future<List<LandUse>> landUsesFuture;
 
-  const LandUseSection({Key? key, required this.landUsesFuture}) : super(key: key);
+  const LandUseSection({super.key, required this.landUsesFuture});
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +217,7 @@ class LandUseSection extends StatelessWidget {
 class LandUseCard extends StatelessWidget {
   final LandUse landUse;
 
-  const LandUseCard({Key? key, required this.landUse}) : super(key: key);
+  const LandUseCard({super.key, required this.landUse});
 
   @override
   Widget build(BuildContext context) {

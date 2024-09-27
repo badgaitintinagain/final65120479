@@ -31,13 +31,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Plantipedia'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Implement search functionality
-            },
-          ),
+        actions: const [
+          // IconButton(
+          //   icon: const Icon(Icons.search),
+          //   onPressed: () {
+          //   },
+          // ),
         ],
       ),
       body: PlantsList(plantsFuture: _plantsFuture),

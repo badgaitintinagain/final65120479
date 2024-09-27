@@ -66,8 +66,7 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Perform necessary migrations for version 2
-      // For example, you might add new columns or tables here
+   
     }
   }
 
@@ -185,7 +184,12 @@ Future<int> insertPlant(Plant plant) async {
     final db = await database;
     return await db.insert(
       'LandUse',
-      landUse.toMap(),
+      {
+        'plantID': landUse.plantID,
+        'componentID': landUse.componentID,
+        'landUseTypeID': landUse.landUseTypeID,
+        'landUseDescription': landUse.landUseDescription,
+      },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

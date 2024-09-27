@@ -154,9 +154,23 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       final plantId = await dbHelper.insertPlant(newPlant);
 
       if (plantId > 0) {
-        // Plant was successfully added
+        // Plant was successfully added, now add the land uses
+        for (int landUseTypeId in _selectedLandUses) {
+          final landUse = LandUse(
+            landUseID: 0,  // Set to 0 to let SQLite auto-increment
+            plantID: plantId,
+            componentID: 1101,  // You might want to allow selecting components as well
+            landUseTypeID: landUseTypeId,
+            landUseDescription: 'Default description',  // You might want to allow adding descriptions
+            landUseTypeName: '',  // This will be filled by the database query
+            componentName: '',  // This will be filled by the database query
+            componentIcon: '',  // This will be filled by the database query
+          );
+          await dbHelper.insertLandUse(landUse);
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Plant added successfully')),
+          const SnackBar(content: Text('Plant and land uses added successfully')),
         );
         Navigator.pop(context, true);
       } else {

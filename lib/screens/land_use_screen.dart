@@ -2,42 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:final65120479/backbone/database_helper.dart';
 import 'package:final65120479/backbone/model.dart';
 
-class LandUseScreen extends StatefulWidget {
+class LandUseScreen extends StatelessWidget {
   final int plantId;
 
   const LandUseScreen({super.key, required this.plantId});
-
-  @override
-  _LandUseScreenState createState() => _LandUseScreenState();
-}
-
-class _LandUseScreenState extends State<LandUseScreen> {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
-  List<LandUse> _landUses = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLandUses();
-  }
-
-  Future<void> _loadLandUses() async {
-    try {
-      final landUses = await _databaseHelper.getLandUsesForPlant(widget.plantId);
-      setState(() {
-        _landUses = landUses;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading land uses: $e')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,42 +13,70 @@ class _LandUseScreenState extends State<LandUseScreen> {
       appBar: AppBar(
         title: const Text('Land Uses'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _landUses.isEmpty
-              ? const Center(child: Text('No land uses found for this plant.'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _landUses.length,
-                  itemBuilder: (context, index) {
-                    final landUse = _landUses[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Type: ${landUse.landUseTypeName}',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Component: ${landUse.componentName}',
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              landUse.landUseDescription,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+      body: LandUsesList(plantId: plantId),
+    );
+  }
+}
+
+class LandUsesList extends StatelessWidget {
+  final int plantId;
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
+
+  LandUsesList({super.key, required this.plantId});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<LandUse>>(
+      future: _databaseHelper.getLandUsesForPlant(plantId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error loading land uses: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No land uses found for this plant.'));
+        } else {
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) => LandUseListItem(landUse: snapshot.data![index]),
+          );
+        }
+      },
+    );
+  }
+}
+
+class LandUseListItem extends StatelessWidget {
+  final LandUse landUse;
+
+  const LandUseListItem({super.key, required this.landUse});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              landUse.landUseTypeName,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Component: ${landUse.componentName}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF54595D)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              landUse.landUseDescription,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

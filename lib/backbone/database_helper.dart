@@ -157,4 +157,34 @@ class DatabaseHelper {
       );
     });
   }
+
+    Future<List<LandUseType>> getLandUseTypes() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('LandUseType');
+    return List.generate(maps.length, (i) {
+      return LandUseType(
+        landUseTypeID: maps[i]['landUseTypeID'],
+        landUseTypeName: maps[i]['landUseTypeName'],
+        landUseTypeDescription: maps[i]['landUseTypeDescription'],
+      );
+    });
+  }
+
+  Future<int> insertPlant(Plant plant) async {
+    final db = await database;
+    return await db.insert(
+      'plant',
+      plant.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> insertLandUse(LandUse landUse) async {
+    final db = await database;
+    return await db.insert(
+      'LandUse',
+      landUse.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 }

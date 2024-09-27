@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:final65120479/backbone/database_helper.dart';
 import 'package:final65120479/backbone/model.dart';
 import 'package:final65120479/screens/plant_detail_screen.dart';
-
-/* สวัสดี */
+import 'package:final65120479/screens/add_plant_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,19 +12,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
-  List<Plant> _plants = [];
+  late Future<List<Plant>> _plantsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadPlants();
+    _refreshPlants();
   }
 
-  Future<void> _loadPlants() async {
-    final plants = await _databaseHelper.getPlants();
+  void _refreshPlants() {
     setState(() {
-      _plants = plants;
+      _plantsFuture = DatabaseHelper().getPlants();
     });
   }
 
@@ -33,46 +30,89 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Plant Information'),
+        title: const Text('Plantipedia'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Implement search functionality
+            },
+          ),
+        ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _plants.length,
-        itemBuilder: (context, index) {
-          final plant = _plants[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/images/icons/${plant.plantImage}',
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              title: Text(
-                plant.plantName,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                plant.plantScientific,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PlantDetailScreen(plant: plant),
-                  ),
-                );
-              },
-            ),
+      body: PlantsList(plantsFuture: _plantsFuture),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddPlantScreen()),
           );
+          if (result == true) {
+            _refreshPlants();
+          }
         },
+        child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class PlantsList extends StatelessWidget {
+  final Future<List<Plant>> plantsFuture;
+
+  const PlantsList({super.key, required this.plantsFuture});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Plant>>(
+      future: plantsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No plants found'));
+        } else {
+          return ListView.separated(
+            itemCount: snapshot.data!.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final plant = snapshot.data![index];
+              return PlantListTile(plant: plant);
+            },
+          );
+        }
+      },
+    );
+  }
+}
+
+class PlantListTile extends StatelessWidget {
+  final Plant plant;
+
+  const PlantListTile({super.key, required this.plant});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        plant.plantName,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        plant.plantScientific,
+        style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Color(0xFF54595D)),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: Color(0xFFA2A9B1)),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PlantDetailScreen(plant: plant),
+          ),
+        );
+      },
     );
   }
 }

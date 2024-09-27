@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:final65120479/screens/homescreen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   runApp(const MyApp());
 }
 
@@ -12,39 +14,36 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Plant Information App',
+      title: 'Plantipedia',
       theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          brightness: Brightness.light,
-        ),
+        primaryColor: Colors.white,
+        scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
-          centerTitle: true,
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          color: Colors.white,
           elevation: 0,
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.black,
-        ),
-        cardTheme: CardTheme(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          color: Colors.grey[100],
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          iconTheme: IconThemeData(color: Color(0xFF202122)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF202122),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          titleMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-          bodyMedium: TextStyle(fontSize: 16),
+          headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF202122)),
+          headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF202122)),
+          bodyLarge: TextStyle(fontSize: 16, color: Color(0xFF202122)),
+          bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF202122)),
+        ),
+        dividerTheme: const DividerThemeData(
+          color: Color(0xFFC8CCD1),
+          thickness: 1,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF3366CC),
+            foregroundColor: Colors.white,
+          ),
         ),
       ),
       home: const HomeScreen(),
